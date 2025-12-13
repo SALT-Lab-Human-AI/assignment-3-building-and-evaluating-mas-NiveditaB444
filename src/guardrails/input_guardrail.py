@@ -1,103 +1,90 @@
 """
 Input Guardrail
-Checks user inputs for safety violations.
+Checks user inputs for safety violations using the SafetyManager.
 """
 
 from typing import Dict, Any, List
+from .safety_manager import SafetyManager
 
 
 class InputGuardrail:
     """
     Guardrail for checking input safety.
-
-    TODO: YOUR CODE HERE
-    - Integrate with Guardrails AI or NeMo Guardrails
-    - Define validation rules
-    - Implement custom validators
-    - Handle different types of violations
+    
+    Uses the SafetyManager's custom policy filters to validate user inputs.
+    This is a wrapper that provides a simpler interface.
     """
 
     def __init__(self, config: Dict[str, Any]):
         """
-        Initialize input guardrail.
+        Initialize input guardrail with SafetyManager.
 
         Args:
             config: Configuration dictionary
         """
         self.config = config
-
-        # TODO: Initialize guardrail framework
-        # Example with Guardrails AI:
-        # from guardrails import Guard
-        # from guardrails.validators import ValidLength, ToxicLanguage
-        # self.guard = Guard().use_many(
-        #     ValidLength(min=10, max=1000),
-        #     ToxicLanguage(threshold=0.5)
-        # )
+        
+        # Use SafetyManager for policy-based filtering
+        self.safety_manager = SafetyManager(config)
 
     def validate(self, query: str) -> Dict[str, Any]:
         """
-        Validate input query.
+        Validate input query using SafetyManager's policy filters.
 
         Args:
             query: User input to validate
 
         Returns:
-            Validation result
-
-        TODO: YOUR CODE HERE
-        - Implement validation logic
-        - Check for toxic language
-        - Check for prompt injection attempts
-        - Check query length and format
-        - Check for off-topic queries
+            Validation result with:
+            - valid: bool - Whether input passes all checks
+            - violations: list - List of policy violations detected
+            - action: str - Recommended action (refuse/redirect/allow)
+            - message: str - User-facing message if validation fails
+            - sanitized_input: str - Original or modified query
         """
+        # Basic validation checks
         violations = []
-
-        # TODO: Implement actual validation
-        # Example structure:
-        # result = self.guard.validate(query)
-        # if not result.validation_passed:
-        #     violations = result.errors
-
-        # Placeholder checks
-        if len(query) < 5:
+        
+        # Length validation
+        if len(query.strip()) < 5:
             violations.append({
                 "validator": "length",
-                "reason": "Query too short",
-                "severity": "low"
+                "category": "input_format",
+                "reason": "Query too short (minimum 5 characters)",
+                "severity": "low",
+                "action": "refuse"
             })
-
+        
         if len(query) > 2000:
             violations.append({
                 "validator": "length",
-                "reason": "Query too long",
-                "severity": "medium"
+                "category": "input_format",
+                "reason": "Query too long (maximum 2000 characters)",
+                "severity": "medium",
+                "action": "refuse"
             })
-
+        
+        # If basic validation fails, return early
+        if violations:
+            return {
+                "valid": False,
+                "violations": violations,
+                "action": "refuse",
+                "message": violations[0]["reason"],
+                "sanitized_input": query
+            }
+        
+        # Use SafetyManager for comprehensive policy checking
+        safety_result = self.safety_manager.check_input_safety(query)
+        
+        # Convert to validation format
         return {
-            "valid": len(violations) == 0,
-            "violations": violations,
-            "sanitized_input": query  # Could be modified version
+            "valid": safety_result["safe"],
+            "violations": safety_result.get("violations", []),
+            "action": safety_result.get("action", "allow"),
+            "message": safety_result.get("message", ""),
+            "sanitized_input": safety_result.get("sanitized_query", query)
         }
-
-    def _check_toxic_language(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for toxic/harmful language.
-
-        TODO: YOUR CODE HERE Implement toxicity detection
-        """
-        violations = []
-        # Implement toxicity check
-        return violations
-
-    def _check_prompt_injection(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for prompt injection attempts.
-
-        TODO: YOUR CODE HERE Implement prompt injection detection
-        """
-        violations = []
         # Check for common prompt injection patterns
         injection_patterns = [
             "ignore previous instructions",

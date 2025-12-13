@@ -28,10 +28,11 @@ def run_web():
 
 
 async def run_evaluation():
-    """Run system evaluation."""
+    """Run system evaluation using SystemEvaluator."""
     import yaml
+    import json
     from dotenv import load_dotenv
-    from src.autogen_orchestrator import AutoGenOrchestrator
+    from src.evaluation.evaluator import SystemEvaluator
     
     # Load environment variables
     load_dotenv()
@@ -40,32 +41,66 @@ async def run_evaluation():
     with open("config.yaml", 'r') as f:
         config = yaml.safe_load(f)
 
-    # Initialize AutoGen orchestrator
-    print("Initializing AutoGen orchestrator...")
-    orchestrator = AutoGenOrchestrator(config)
+    # Load test queries
+    with open("data/example_queries.json", 'r') as f:
+        queries_data = json.load(f)
+        test_queries = queries_data.get("queries", [])
+
+    print("\n" + "=" * 80)
+    print("MULTI-AGENT SYSTEM EVALUATION")
+    print("=" * 80)
+    print(f"\nResearch Topic: {config.get('system', {}).get('topic', 'HCI Research')}")
+    print(f"Model: {config.get('models', {}).get('default', {}).get('name', 'gpt-4o-mini')}")
+    print(f"Test Queries: {len(test_queries)}")
+    print(f"Evaluation Criteria: {', '.join(config.get('evaluation', {}).get('criteria', []))}")
     
-    # For now, run a simple test query
-    # TODO: Integrate with SystemEvaluator for full evaluation
-    print("\n" + "=" * 70)
-    print("RUNNING TEST QUERY")
-    print("=" * 70)
+    # Initialize evaluator
+    print("\n" + "-" * 80)
+    print("Initializing SystemEvaluator...")
+    evaluator = SystemEvaluator(config)
     
-    test_query = "What are the key principles of accessible user interface design?"
-    print(f"\nQuery: {test_query}\n")
+    # Run evaluation
+    print("\n" + "-" * 80)
+    print("Running evaluation on test queries...")
+    print("This may take several minutes depending on the number of queries...")
+    print("-" * 80 + "\n")
     
-    result = orchestrator.process_query(test_query)
+    results = await evaluator.evaluate_system(test_queries)
     
-    print("\n" + "=" * 70)
-    print("RESULTS")
-    print("=" * 70)
-    print(f"\nResponse:\n{result.get('response', 'No response generated')}")
-    print(f"\nMetadata:")
-    print(f"  - Messages: {result.get('metadata', {}).get('num_messages', 0)}")
-    print(f"  - Sources: {result.get('metadata', {}).get('num_sources', 0)}")
+    # Display results
+    print("\n" + "=" * 80)
+    print("EVALUATION RESULTS")
+    print("=" * 80)
     
-    print("\n" + "=" * 70)
-    print("Note: Full evaluation with SystemEvaluator can be implemented")
-    print("=" * 70)
+    print(f"\nOverall Score: {results['overall_score']:.3f}")
+    print(f"Total Queries Evaluated: {results['total_queries']}")
+    print(f"Successful: {results['successful_queries']}")
+    print(f"Failed: {results['failed_queries']}")
+    
+    print("\n" + "-" * 80)
+    print("CRITERION SCORES:")
+    for criterion, score in results['criterion_averages'].items():
+        print(f"  {criterion}: {score:.3f}")
+    
+    if results.get('best_query'):
+        print("\n" + "-" * 80)
+        print("BEST PERFORMING QUERY:")
+        print(f"  Query: {results['best_query']['query'][:80]}...")
+        print(f"  Score: {results['best_query']['score']:.3f}")
+    
+    if results.get('worst_query'):
+        print("\n" + "-" * 80)
+        print("LOWEST PERFORMING QUERY:")
+        print(f"  Query: {results['worst_query']['query'][:80]}...")
+        print(f"  Score: {results['worst_query']['score']:.3f}")
+    
+    print("\n" + "=" * 80)
+    print("EVALUATION COMPLETE")
+    print("=" * 80)
+    print(f"\nDetailed results saved to: {results.get('report_path', 'outputs/evaluation_report.json')}")
+    print(f"Timestamp: {results.get('timestamp', '')}")
+    print("\nReview the JSON report for detailed per-query evaluations.")
+    print("=" * 80 + "\n")
 
 
 def run_autogen():

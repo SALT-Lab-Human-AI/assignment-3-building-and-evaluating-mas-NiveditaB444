@@ -1,173 +1,118 @@
 [
   {
     "id": 1,
-    "query": "What are the key principles of explainable AI for novice users?",
-    "category": "explainable_ai",
+    "query": "What are the core design patterns for building trustworthy AI agents in user interfaces?",
+    "category": "agentic_ux_trust",
     "expected_topics": [
       "transparency",
-      "interpretability",
-      "user understanding",
-      "trust"
+      "predictability",
+      "user control",
+      "agent behavior visibility",
+      "feedback mechanisms"
     ],
-    "ground_truth": "Explainable AI for novices should focus on transparency, simple visualizations, interactive explanations, and building user trust through understandable model behavior.",
+    "ground_truth": "Trustworthy AI agents require transparent decision-making, predictable behavior, user control mechanisms, clear visibility of agent actions, and robust feedback loops to build and maintain user trust.",
     "expected_sources": [
-      "academic papers on XAI",
-      "HCI research on AI transparency",
-      "user studies"
+      "HCI research on AI agents",
+      "trust in automation papers",
+      "agentic UX design research",
+      "CHI conference proceedings"
     ]
   },
   {
     "id": 2,
-    "query": "How has AR usability evolved in the past 5 years?",
-    "category": "ar_usability",
+    "query": "How do conversational agents impact task completion efficiency compared to traditional UIs?",
+    "category": "agentic_ux_automation",
     "expected_topics": [
-      "interaction techniques",
-      "user experience",
-      "hardware improvements",
-      "application domains"
+      "task automation",
+      "interaction efficiency",
+      "cognitive load",
+      "multi-turn conversations",
+      "error recovery"
     ],
     "ground_truth": null,
     "expected_sources": [
-      "recent AR research papers",
-      "CHI conference proceedings",
-      "industry reports"
+      "comparative UX studies",
+      "conversational UI research",
+      "automation and usability papers",
+      "CHI and CSCW proceedings"
     ]
   },
   {
     "id": 3,
-    "query": "What are ethical considerations in using AI for education?",
-    "category": "ai_ethics",
+    "query": "What are the emerging interaction patterns for AI copilots in creative and professional workflows?",
+    "category": "agentic_ux_patterns",
     "expected_topics": [
-      "bias",
-      "privacy",
-      "accessibility",
-      "transparency",
-      "student autonomy"
+      "collaborative AI",
+      "suggestion interfaces",
+      "context-aware assistance",
+      "human-AI collaboration",
+      "workflow integration"
     ],
     "ground_truth": null,
     "expected_sources": [
-      "ethics papers",
-      "educational technology research",
-      "policy documents"
+      "AI copilot design research",
+      "collaborative AI papers",
+      "creative tool design studies",
+      "DIS and UIST proceedings"
     ]
   },
   {
     "id": 4,
-    "query": "Compare different approaches to measuring user experience in mobile applications",
-    "category": "ux_measurement",
+    "query": "How should user interfaces communicate agent autonomy levels and capabilities to users?",
+    "category": "agentic_ux_communication",
     "expected_topics": [
-      "questionnaires",
-      "analytics",
-      "user testing",
-      "physiological measures"
+      "transparency design",
+      "mental models",
+      "capability disclosure",
+      "limitation awareness",
+      "expectation management"
     ],
     "ground_truth": null,
     "expected_sources": [
-      "UX research papers",
-      "methodological papers",
-      "case studies"
+      "explainable AI research",
+      "transparency in AI systems",
+      "human-agent interaction papers",
+      "CHI and IUI proceedings"
     ]
   },
   {
     "id": 5,
-    "query": "What are the latest developments in conversational AI for healthcare?",
-    "category": "conversational_ai",
+    "query": "What are the usability challenges and solutions for multi-agent systems in consumer applications?",
+    "category": "agentic_ux_usability",
     "expected_topics": [
-      "chatbots",
-      "patient interaction",
-      "clinical decision support",
-      "privacy concerns"
+      "agent coordination",
+      "user confusion",
+      "interface complexity",
+      "handoff patterns",
+      "unified experience"
     ],
     "ground_truth": null,
     "expected_sources": [
-      "medical informatics papers",
-      "healthcare AI research",
-      "clinical studies"
+      "multi-agent systems research",
+      "usability studies",
+      "agent orchestration papers",
+      "HCI and AI papers"
     ]
   },
   {
     "id": 6,
-    "query": "How do design patterns for accessibility differ across web and mobile platforms?",
-    "category": "accessibility",
+    "query": "How are proactive AI agents changing user expectations and interaction paradigms in modern interfaces?",
+    "category": "agentic_ux_paradigm_shift",
     "expected_topics": [
-      "screen readers",
-      "touch interfaces",
-      "WCAG guidelines",
-      "responsive design"
+      "proactive assistance",
+      "interruption management",
+      "user control",
+      "notification design",
+      "interaction paradigms",
+      "user expectations"
     ],
     "ground_truth": null,
     "expected_sources": [
-      "accessibility guidelines",
-      "comparative studies",
-      "design pattern libraries"
-    ]
-  },
-  {
-    "id": 7,
-    "query": "What are best practices for visualizing uncertainty in data displays?",
-    "category": "data_visualization",
-    "expected_topics": [
-      "visual encoding",
-      "uncertainty representation",
-      "user comprehension",
-      "design guidelines"
-    ],
-    "ground_truth": null,
-    "expected_sources": [
-      "visualization research",
-      "perceptual studies",
-      "design guidelines"
-    ]
-  },
-  {
-    "id": 8,
-    "query": "How can voice interfaces be designed for elderly users?",
-    "category": "voice_interfaces",
-    "expected_topics": [
-      "age-related challenges",
-      "speech recognition",
-      "error handling",
-      "user preferences"
-    ],
-    "ground_truth": null,
-    "expected_sources": [
-      "aging and technology research",
-      "voice UI papers",
-      "user studies with elderly"
-    ]
-  },
-  {
-    "id": 9,
-    "query": "What are emerging trends in AI-driven prototyping tools?",
-    "category": "ai_prototyping",
-    "expected_topics": [
-      "generative design",
-      "automation",
-      "designer collaboration",
-      "tool capabilities"
-    ],
-    "ground_truth": null,
-    "expected_sources": [
-      "design tools research",
-      "AI in design papers",
-      "industry tools and reviews"
-    ]
-  },
-  {
-    "id": 10,
-    "query": "How do cultural factors influence mobile app design?",
-    "category": "cross_cultural_design",
-    "expected_topics": [
-      "localization",
-      "cultural dimensions",
-      "user preferences",
-      "design adaptations"
-    ],
-    "ground_truth": null,
-    "expected_sources": [
-      "cross-cultural HCI research",
-      "cultural studies",
-      "international design case studies"
+      "proactive agent research",
+      "notification systems papers",
+      "interaction design research",
+      "CHI and CSCW proceedings",
+      "user expectation studies"
     ]
   }
 ]

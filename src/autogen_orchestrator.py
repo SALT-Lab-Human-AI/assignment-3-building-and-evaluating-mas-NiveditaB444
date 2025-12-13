@@ -117,7 +117,7 @@ Please work together to answer this query comprehensively:
         
         # Extract conversation history
         messages = []
-        async for message in result.messages:
+        for message in result.messages:
             msg_dict = {
                 "source": message.source,
                 "content": message.content if hasattr(message, 'content') else str(message),

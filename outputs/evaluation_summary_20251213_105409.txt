@@ -1,0 +1,16 @@
+EVALUATION SUMMARY
+======================================================================
+
+Total Queries: 6
+Successful: 6
+Failed: 0
+Success Rate: 100.00%
+
+Overall Average Score: 0.761
+
+Scores by Criterion:
+  relevance:          0.840
+  evidence_quality:   0.570
+  factual_accuracy:   0.760
+  safety_compliance:  1.000
+  clarity:            0.730

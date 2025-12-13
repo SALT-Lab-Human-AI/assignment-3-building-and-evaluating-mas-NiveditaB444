@@ -17,6 +17,7 @@ import logging
 from dotenv import load_dotenv
 
 from src.autogen_orchestrator import AutoGenOrchestrator
+from src.guardrails.safety_manager import SafetyManager
 
 # Load environment variables
 load_dotenv()
@@ -24,19 +25,18 @@ load_dotenv()
 class CLI:
     """
     Command-line interface for the research assistant.
-
-    TODO: YOUR CODE HERE
-    - Implement interactive prompt loop
-    - Display agent traces clearly
-    - Show citations and sources
-    - Indicate safety events (blocked/sanitized)
-    - Handle user commands (help, quit, clear, etc.)
-    - Format output nicely
+    
+    Features:
+    - Interactive query processing
+    - Agent trace display
+    - Citation and source display
+    - Safety event notifications
+    - System statistics
     """
 
     def __init__(self, config_path: str = "config.yaml"):
         """
-        Initialize CLI.
+        Initialize CLI with orchestrator and safety manager.
 
         Args:
             config_path: Path to configuration file
@@ -58,8 +58,12 @@ class CLI:
             self.logger.error(f"Failed to initialize orchestrator: {e}")
             raise
 
+        # Initialize safety manager for displaying safety events
+        self.safety_manager = SafetyManager(self.config.get("safety", {}))
+
         self.running = True
         self.query_count = 0
+        self.safety_events_count = 0
 
     def _setup_logging(self):
         """Setup logging configuration."""
@@ -109,6 +113,17 @@ class CLI:
                 elif query.lower() == 'stats':
                     self._print_stats()
                     continue
+                elif query.lower() == 'safety':
+                    self._print_safety_report()
+                    continue
+
+                # Check input safety before processing
+                safety_check = self.safety_manager.check_input_safety(query)
+                
+                if not safety_check["safe"]:
+                    self._display_safety_violation(safety_check)
+                    self.safety_events_count += 1
+                    continue
 
                 # Process query
                 print("\n" + "=" * 70)
@@ -119,6 +134,17 @@ class CLI:
                     # Process through orchestrator (synchronous call, not async)
                     result = self.orchestrator.process_query(query)
                     self.query_count += 1
+                    
+                    # Check output safety
+                    response = result.get("response", "")
+                    output_safety = self.safety_manager.check_output_safety(response)
+                    
+                    if not output_safety["safe"]:
+                        result["safety_warning"] = True
+                        result["safety_details"] = output_safety
+                        self.safety_events_count += 1
+                    elif output_safety.get("warnings"):
+                        result["safety_warnings"] = output_safety["warnings"]
                     
                     # Display result
                     self._display_result(result)
@@ -150,6 +176,7 @@ class CLI:
         print("  help    - Show this help message")
         print("  clear   - Clear the screen")
         print("  stats   - Show system statistics")
+        print("  safety  - Show safety event summary")
         print("  quit    - Exit the application")
         print("\nOr enter a research query to get started!")
 
@@ -162,13 +189,80 @@ class CLI:
         """Clear the terminal screen."""
         import os
         os.system('clear' if os.name == 'posix' else 'cls')
-
     def _print_stats(self):
         """Print system statistics."""
         print("\nSystem Statistics:")
         print(f"  Queries processed: {self.query_count}")
+        print(f"  Safety events: {self.safety_events_count}")
         print(f"  System: {self.config.get('system', {}).get('name', 'Unknown')}")
         print(f"  Topic: {self.config.get('system', {}).get('topic', 'Unknown')}")
+        print(f"  Model: {self.config.get('models', {}).get('default', {}).get('name', 'Unknown')}")
+    def _display_result(self, result: Dict[str, Any]):
+        """Display query result with formatting."""
+        print("\n" + "=" * 70)
+        print("RESPONSE")
+        print("=" * 70)
+
+        # Check for errors
+        if "error" in result:
+            print(f"\n❌ Error: {result['error']}")
+            return
+
+        # Display safety warning if present
+        if result.get("safety_warning"):
+            print("\n⚠️  WARNING: Safety issues detected in response")
+            safety_details = result.get("safety_details", {})
+            if safety_details.get("action_taken") == "redacted":
+                print("   Some content has been redacted for safety.")
+            print()
+
+        # Display response
+        response = result.get("response", "")
+        if response:
+            print(f"\n{response}\n")
+        else:
+            print("\n❌ Response was blocked due to safety concerns.\n")
+            return
+        
+        # Display safety warnings (non-blocking issues)
+        if result.get("safety_warnings"):
+            print("\n" + "-" * 70)
+            print("ℹ️  SAFETY NOTES")
+            print("-" * 70)
+            for warning in result["safety_warnings"]:
+                print(f"  • {warning.get('message', 'Quality issue detected')}")breakdown'):
+            print("\nViolations by category:")
+            for category, count in report['category_breakdown'].items():
+                print(f"  • {category}: {count}")
+        
+        if report.get('severity_breakdown'):
+            print("\nViolations by severity:")
+            for severity, count in report['severity_breakdown'].items():
+                if count > 0:
+                    print(f"  • {severity}: {count}")
+        
+        print("=" * 70)
+    
+    def _display_safety_violation(self, safety_check: Dict[str, Any]):
+        """Display safety violation message."""
+        print("\n" + "=" * 70)
+        print("🛡️  SAFETY VIOLATION DETECTED")
+        print("=" * 70)
+        
+        message = safety_check.get("message", "This query violates safety policies.")
+        print(f"\n❌ {message}\n")
+        
+        violations = safety_check.get("violations", [])
+        if violations:
+            print("Details:")
+            for v in violations:
+                category = v.get("category", "unknown")
+                severity = v.get("severity", "unknown")
+                reason = v.get("message", "Unknown reason")
+                print(f"  • [{severity.upper()}] {category}: {reason}")
+        
+        print("\nPlease rephrase your query and try again.")
+        print("=" * 70)
         print(f"  Model: {self.config.get('models', {}).get('default', {}).get('name', 'Unknown')}")
 
     def _display_result(self, result: Dict[str, Any]):

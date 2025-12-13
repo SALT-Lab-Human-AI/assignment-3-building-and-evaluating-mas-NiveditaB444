@@ -136,12 +136,13 @@ class SystemEvaluator:
         if self.orchestrator:
             try:
                 # Call orchestrator's process_query method
-                # TODO: YOUR CODE HERE
-                # Need to implement this in their orchestrator
                 response_data = self.orchestrator.process_query(query)
                 
-                # If process_query is async, use:
-                # response_data = await self.orchestrator.process_query(query)
+                # Convert response to JSON-serializable format
+                # Extract just the text content, avoiding FunctionCall objects
+                if isinstance(response_data, dict):
+                    # Clean up any non-serializable objects
+                    response_data = self._make_serializable(response_data)
                 
             except Exception as e:
                 self.logger.error(f"Error processing query through orchestrator: {e}")
@@ -176,6 +177,24 @@ class SystemEvaluator:
             "metadata": response_data.get("metadata", {}),
             "ground_truth": ground_truth
         }
+
+    def _make_serializable(self, obj: Any) -> Any:
+        """
+        Convert non-JSON-serializable objects to serializable format.
+        Handles FunctionCall objects and other complex types.
+        """
+        if isinstance(obj, dict):
+            return {k: self._make_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._make_serializable(item) for item in obj]
+        elif hasattr(obj, '__dict__'):
+            # Convert objects with __dict__ to dict (like FunctionCall)
+            return str(obj)
+        elif isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        else:
+            # Convert other non-serializable types to string
+            return str(obj)
 
     def _load_test_queries(self, path: str) -> List[Dict[str, Any]]:
         """

@@ -1,173 +1,111 @@
 """
 Output Guardrail
-Checks system outputs for safety violations.
+Checks system outputs for safety violations using the SafetyManager.
 """
 
 from typing import Dict, Any, List
-import re
+from .safety_manager import SafetyManager
 
 
 class OutputGuardrail:
     """
     Guardrail for checking output safety.
-
-    TODO: YOUR CODE HERE
-    - Integrate with Guardrails AI or NeMo Guardrails
-    - Check for harmful content in responses
-    - Verify factual consistency
-    - Detect potential misinformation
-    - Remove PII (personal identifiable information)
+    
+    Uses the SafetyManager's custom policy filters to validate system responses.
+    This is a wrapper that provides a simpler interface for output validation.
     """
 
     def __init__(self, config: Dict[str, Any]):
         """
-        Initialize output guardrail.
+        Initialize output guardrail with SafetyManager.
 
         Args:
             config: Configuration dictionary
         """
         self.config = config
-
-        # TODO: Initialize guardrail framework
-        # Example with Guardrails AI:
-        # from guardrails import Guard
-        # from guardrails.validators import ToxicLanguage, PIIFilter
-        # self.guard = Guard().use_many(
-        #     ToxicLanguage(threshold=0.5),
-        #     PIIFilter()
-        # )
+        
+        # Use SafetyManager for policy-based filtering
+        self.safety_manager = SafetyManager(config)
 
     def validate(self, response: str, sources: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Validate output response.
+        Validate output response using SafetyManager's policy filters.
 
         Args:
             response: Generated response to validate
-            sources: Optional list of sources used (for fact-checking)
+            sources: Optional list of sources used (for reference checking)
 
         Returns:
-            Validation result
-
-        TODO: YOUR CODE HERE
-        - Implement validation logic
-        - Check for harmful content
-        - Check for PII
-        - Verify claims against sources
-        - Check for bias
+            Validation result with:
+            - valid: bool - Whether output passes all checks
+            - violations: list - List of policy violations detected
+            - warnings: list - Non-blocking issues flagged
+            - sanitized_output: str - Original or sanitized response
+            - action_taken: str - What action was performed (none/redacted/blocked)
         """
-        violations = []
-
-        # TODO: Implement actual validation
-        # Example:
-        # result = self.guard.validate(response)
-        # if not result.validation_passed:
-        #     violations = result.errors
-
-        # Placeholder checks
-        pii_violations = self._check_pii(response)
-        violations.extend(pii_violations)
-
-        harmful_violations = self._check_harmful_content(response)
-        violations.extend(harmful_violations)
-
-        if sources:
-            consistency_violations = self._check_factual_consistency(response, sources)
-            violations.extend(consistency_violations)
-
-        return {
-            "valid": len(violations) == 0,
-            "violations": violations,
-            "sanitized_output": self._sanitize(response, violations) if violations else response
-        }
-
-    def _check_pii(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for personally identifiable information.
-
-        TODO: YOUR CODE HERE Implement comprehensive PII detection
-        """
-        violations = []
-
-        # Simple regex patterns for common PII
-        patterns = {
-            "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            "phone": r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
-            "ssn": r'\b\d{3}-\d{2}-\d{4}\b',
-        }
-
-        for pii_type, pattern in patterns.items():
-            matches = re.findall(pattern, text)
-            if matches:
-                violations.append({
-                    "validator": "pii",
-                    "pii_type": pii_type,
-                    "reason": f"Contains {pii_type}",
+        # Basic validation checks
+        if not response or len(response.strip()) == 0:
+            return {
+                "valid": False,
+                "violations": [{
+                    "validator": "empty_response",
+                    "category": "output_format",
+                    "reason": "Response is empty",
                     "severity": "high",
-                    "matches": matches
-                })
-
-        return violations
-
-    def _check_harmful_content(self, text: str) -> List[Dict[str, Any]]:
+                    "action": "refuse"
+                }],
+                "warnings": [],
+                "sanitized_output": None,
+                "action_taken": "blocked"
+            }
+        
+        # Use SafetyManager for comprehensive output checking
+        safety_result = self.safety_manager.check_output_safety(response)
+        
+        # Check if sources were provided and used
+        warnings = safety_result.get("warnings", [])
+        if sources is None or len(sources) == 0:
+            warnings.append({
+                "validator": "citation_check",
+                "category": "quality",
+                "reason": "No sources provided for verification",
+                "severity": "low",
+                "action": "flag"
+            })
+        
+        # Convert to validation format
+        return {
+            "valid": safety_result["safe"],
+            "violations": safety_result.get("violations", []),
+            "warnings": warnings,
+            "sanitized_output": safety_result.get("response", response),
+            "action_taken": safety_result.get("action_taken", "none")
+        }
+    
+    def get_sanitization_report(self, original: str, sanitized: str) -> Dict[str, Any]:
         """
-        Check for harmful or inappropriate content.
-
-        TODO: YOUR CODE HERE Implement harmful content detection
+        Generate a report of what was sanitized.
+        
+        Args:
+            original: Original response
+            sanitized: Sanitized response
+            
+        Returns:
+            Report dictionary with changes made
         """
-        violations = []
-
-        # Placeholder - should use proper toxicity detection
-        harmful_keywords = ["violent", "harmful", "dangerous"]
-        for keyword in harmful_keywords:
-            if keyword in text.lower():
-                violations.append({
-                    "validator": "harmful_content",
-                    "reason": f"May contain harmful content: {keyword}",
-                    "severity": "medium"
-                })
-
-        return violations
-
-    def _check_factual_consistency(
-        self,
-        response: str,
-        sources: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """
-        Check if response is consistent with sources.
-
-        TODO: YOUR CODE HERE Implement fact-checking logic
-        This could use LLM-based verification
-        """
-        violations = []
-
-        # Placeholder - this is complex and could use LLM
-        # to verify claims against sources
-
-        return violations
-
-    def _check_bias(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for biased language.
-
-        TODO: YOUR CODE HERE Implement bias detection
-        """
-        violations = []
-        # Implement bias detection
-        return violations
-
-    def _sanitize(self, text: str, violations: List[Dict[str, Any]]) -> str:
-        """
-        Sanitize text by removing/redacting violations.
-
-        TODO: YOUR CODE HERE Implement sanitization logic
-        """
-        sanitized = text
-
-        # Redact PII
-        for violation in violations:
-            if violation.get("validator") == "pii":
-                for match in violation.get("matches", []):
-                    sanitized = sanitized.replace(match, "[REDACTED]")
-
-        return sanitized
+        changes = []
+        
+        if original != sanitized:
+            changes.append({
+                "type": "content_redacted",
+                "original_length": len(original),
+                "sanitized_length": len(sanitized),
+                "chars_removed": len(original) - len(sanitized)
+            })
+        
+        return {
+            "sanitized": original != sanitized,
+            "changes": changes,
+            "original_preview": original[:100] + "..." if len(original) > 100 else original,
+            "sanitized_preview": sanitized[:100] + "..." if len(sanitized) > 100 else sanitized
+        }
