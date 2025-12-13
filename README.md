@@ -50,19 +50,7 @@ This video demonstrates:
 - Response generation with citations
 - LLM-as-a-Judge evaluation results
 
-**Streamlit Web Interface Screenshots**:
-
-![UI Overview](outputs/UI_1.png)
-*Main interface showing query input, real-time agent status, and processing indicator*
-
-![Query Results](outputs/UI_2.png)
-*Response with citations, agent activity summary, and conversation traces*
-
-![Query Processing](outputs/Query2_demo_1.png)
-*Multi-agent coordination in action - Planner creating research strategy*
-
-![Agent Traces](outputs/Query2_demo_2.png)
-*Detailed conversation traces showing all agent messages with role icons*
+**Streamlit Web Interface Screenshots in the outputs folder**:
 
 **Quick Local Demo**: Run `python demo.py` to see complete end-to-end workflow (30-60 seconds)
 
