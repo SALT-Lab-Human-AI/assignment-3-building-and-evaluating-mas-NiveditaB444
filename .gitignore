@@ -212,7 +212,7 @@ logs/
 data/*.json
 data/*.csv
 !data/example_queries.json
-outputs/
+# outputs/ - Commented out to include evaluation results and screenshots
 *.pkl
 *.pickle
 
