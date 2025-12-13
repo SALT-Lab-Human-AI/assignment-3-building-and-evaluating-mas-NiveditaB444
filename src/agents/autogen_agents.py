@@ -62,6 +62,7 @@ def create_model_client(config: Dict[str, Any]) -> OpenAIChatCompletionClient:
             model=model_config.get("name", "gpt-4o-mini"),
             api_key=api_key,
             base_url=base_url,
+            timeout=120.0,  # Increase timeout to 120 seconds
         )
 
     elif provider == "vllm":
@@ -104,16 +105,13 @@ def create_planner_agent(config: Dict[str, Any], model_client: OpenAIChatComplet
     agent_config = config.get("agents", {}).get("planner", {})
     
     # Load system prompt from config or use default
-    default_system_message = """You are a Research Planner. Your job is to break down research queries into clear, actionable steps.
+    default_system_message = """You are a Research Planner. Break down queries into 3-4 clear, actionable steps.
 
-When given a research query, you should:
-1. Identify the key concepts and topics to investigate
-2. Determine what types of sources would be most valuable (academic papers, web articles, etc.)
-3. Suggest specific search queries for the Researcher
-4. Outline how the findings should be synthesized
+1. Identify 2-3 key concepts to investigate
+2. Suggest specific search queries for the Researcher (max 2-3 queries)
+3. Note how findings should be synthesized
 
-Provide your plan in a structured format with numbered steps.
-Be specific about what information to gather and why it's relevant."""
+Be concise and specific. Keep your plan to 5-6 sentences max."""
 
     # Use custom prompt from config if available, otherwise use default
     custom_prompt = agent_config.get("system_prompt", "")
@@ -204,18 +202,13 @@ def create_writer_agent(config: Dict[str, Any], model_client: OpenAIChatCompleti
     agent_config = config.get("agents", {}).get("writer", {})
     
     # Load system prompt from config or use default
-    default_system_message = """You are a Research Writer. Your job is to synthesize research findings into clear, well-organized responses.
+    default_system_message = """You are a Research Writer. Synthesize findings into a clear, concise response (max 400 words).
 
-When writing:
-1. Start with an overview/introduction
-2. Present findings in a logical structure
-3. Cite sources inline using [Source: Title/Author]
-4. Synthesize information from multiple sources
-5. Avoid copying text directly - paraphrase and synthesize
-6. Include a references section at the end
-7. Ensure the response directly answers the original query
+1. Brief overview (1-2 sentences)
+2. Key findings with inline citations [Source: Title]
+3. Brief references section
 
-Format your response professionally with clear headings, paragraphs, in-text citations, and a References section at the end."""
+Be direct, well-organized, and cite sources. Keep response focused and concise."""
 
     # Use custom prompt from config if available
     custom_prompt = agent_config.get("system_prompt", "")
@@ -251,16 +244,14 @@ def create_critic_agent(config: Dict[str, Any], model_client: OpenAIChatCompleti
     agent_config = config.get("agents", {}).get("critic", {})
     
     # Load system prompt from config or use default
-    default_system_message = """You are a Research Critic. Your job is to evaluate the quality and accuracy of research outputs.
+    default_system_message = """You are a Research Critic. Provide brief quality evaluation.
 
-Evaluate the research and writing on these criteria:
-1. **Relevance**: Does it answer the original query?
-2. **Evidence Quality**: Are sources credible and well-cited?
-3. **Completeness**: Are all aspects of the query addressed?
-4. **Accuracy**: Are there any factual errors or contradictions?
-5. **Clarity**: Is the writing clear and well-organized?
+Rate (1-10) and check:
+1. Sources: Sufficient citations?
+2. Relevance: Answers query?
+3. Clarity: Well-organized?
 
-Provide constructive but thorough feedback. End your evaluation with either "TERMINATE" if approved, or suggest specific improvements."""
+Keep feedback to 3-4 sentences. End with "TERMINATE" if score >=7, or suggest 1-2 key improvements."""
 
     # Use custom prompt from config if available
     custom_prompt = agent_config.get("system_prompt", "")
@@ -301,10 +292,11 @@ def create_research_team(config: Dict[str, Any]) -> RoundRobinGroupChat:
     # Create termination condition
     termination = TextMentionTermination("TERMINATE")
     
-    # Create team with round-robin ordering
+    # Create team with round-robin ordering and max_turns to prevent excessive context
     team = RoundRobinGroupChat(
         participants=[planner, researcher, writer, critic],
         termination_condition=termination,
+        max_turns=10,  # Limit to 10 turns to prevent token overflow
     )
     
     return team
